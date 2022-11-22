@@ -48,14 +48,18 @@ function menuScreen(){
 
 function mouseClicked(){
   if(mouseX > (hostButtonX - buttonWidth/2) && mouseX < (hostButtonX + buttonWidth/2) && mouseY > (hostButtonY - buttonHeight/2) && mouseY < (hostButtonY + buttonHeight/2)){
-    connectToHost()
+    hostServer();
+  }
+  if(mouseX > (joinButtonX - buttonWidth/2) && mouseX < (joinButtonX + buttonWidth/2) && mouseY > (joinButtonY - buttonHeight/2) && mouseY < (joinButtonY + buttonHeight/2)){
+    connectToHost();
+    print("test");
+
   }
 }
 
 function connectToHost(){
-  const ws = new WebSocket("ws://localhost:8082");
+  const ws = new WebSocket("ws:/tar6269.github.io/Major-Project/");
   ws.addEventListener("open", () =>{
   console.log("We are connected!")
 });
-
 }
