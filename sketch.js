@@ -58,7 +58,9 @@ function mouseClicked(){
 }
 
 function connectToHost(){
-  const ws = new WebSocket("ws:/tar6269.github.io/Major-Project/");
+  // const ws = new WebSocket("ws:/tar6269.github.io/Major-Project/");
+  const ws = new WebSocket("ws:/localhost:443");
+
   ws.addEventListener("open", () =>{
   console.log("We are connected!")
 });
