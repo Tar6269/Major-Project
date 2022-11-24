@@ -1,15 +1,15 @@
 # CS30 Major Project Proposal
 
-description of project goes here!
+recreation of raft wars flash game, with working online multiplayer, 2D physics based projectiles, winning and losing.
 
 ## Need to have
 
-- thing one
+- working two player multiplayer across online networks
 
-- thing two
+- working game mechanics, win/loss implemented
 
 ## Nice to have
 
-- another thing
+- more than two clients at a time
 
-- yet another thing
+- real time aiming projections across both clients
