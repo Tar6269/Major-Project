@@ -60,11 +60,7 @@ function mouseClicked(){
 function connectToHost(){
   // const ws = new WebSocket("ws:/tar6269.github.io/Major-Project/");
   const ws = new WebSocket("wss://momentous-honored-ragdoll.glitch.me/");
-  // ,{
-  //   headers:{
-  //     "user-agent": "Mozilla"
-  //   }
-  // }
+
   ws.addEventListener("open", () =>{
   console.log("We are connected!")
 });
