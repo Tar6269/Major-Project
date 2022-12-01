@@ -13,6 +13,15 @@ let joinButtonY;
 let hostOrClient
 let displayTest = false;
 let canvas;
+const ws = new WebSocket("wss://momentous-honored-ragdoll.glitch.me/");
+
+ws.addEventListener("open", () =>{
+  console.log("We are connected!")
+  ws.addEventListener("close", () =>{
+    ws.CLOSED = true;
+  });
+});
+
 function setup() {
   canvas = createCanvas(windowWidth, windowHeight);
   canvas.center("horizontal");
@@ -59,9 +68,14 @@ function mouseClicked(){
 
 function connectToHost(){
   // const ws = new WebSocket("ws:/tar6269.github.io/Major-Project/");
-  const ws = new WebSocket("wss://momentous-honored-ragdoll.glitch.me/");
 
-  ws.addEventListener("open", () =>{
-  console.log("We are connected!")
-});
+  ws.send("hello");
+  print("message should be sent...")
+
+}
+function hostServer(){
+  let test = {
+    hello: true,
+  };
+  print(test.hello);
 }
