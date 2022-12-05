@@ -17,6 +17,9 @@ const ws = new WebSocket("wss://momentous-honored-ragdoll.glitch.me/");
 
 ws.addEventListener("open", () =>{
   console.log("We are connected!")
+  ws.addEventListener("message", function(message){
+    console.log(message.data);
+  })
   ws.addEventListener("close", () =>{
     ws.CLOSED = true;
   });
