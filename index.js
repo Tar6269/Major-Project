@@ -4,7 +4,7 @@ const wss = new WebSocket.Server({ port:5000 });
 
 wss.on("connection", ws => {
     console.log("new client connected");
-
+    ws.binaryType = "string";
     // console.log(sockets);
   ws.on("message", function(msg){
     
@@ -12,7 +12,7 @@ wss.on("connection", ws => {
 
     // sends message to all connected clients
     wss.clients.forEach(function(client){
-      client.send(String(msg));
+      client.send(msg);
     })
 
   });
