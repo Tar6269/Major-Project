@@ -9,10 +9,13 @@ wss.on("connection", ws => {
   ws.on("message", function(msg){
     
     console.log("message:" + msg);
+    console.log(msg);
 
     // sends message to all connected clients
     wss.clients.forEach(function(client){
+
       client.send(msg);
+      
     })
 
   });

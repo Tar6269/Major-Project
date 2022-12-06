@@ -14,17 +14,18 @@ let hostOrClient
 let displayTest = false;
 let canvas;
 const ws = new WebSocket("wss://momentous-honored-ragdoll.glitch.me/");
-ws.binaryType = "string";
+let reader = new FileReader();
+
+reader.onload(() => console.log(reader.result));
+// ws.binaryType = "string";
 ws.addEventListener("open", () =>{
   console.log("We are connected!")
   ws.addEventListener("message", function(message){
 
-    console.log(message.data);
-    // let reader = new FileReader()
+    // console.log(message.data.text());
 
-    // reader.onload(() => console.log(reader.result));
 
-    // reader.readAsText(message);
+    reader.readAsText(message.data);
 
   })
   ws.addEventListener("close", () =>{
@@ -78,9 +79,10 @@ function mouseClicked(){
 
 function connectToHost(){
   // const ws = new WebSocket("ws:/tar6269.github.io/Major-Project/");
-  // let newMessage = new Blob(["hello"], {type:String});
 
-  ws.send(["hello", "salutations"]);
+  let newMessage = new Blob(["hello", "hi", "whats up?"], {type:'text/plain'});
+
+  ws.send(newMessage);
 
   print("message should be sent...");
 
