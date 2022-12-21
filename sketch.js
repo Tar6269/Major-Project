@@ -14,18 +14,20 @@ let hostOrClient
 let displayTest = false;
 let canvas;
 const ws = new WebSocket("wss://momentous-honored-ragdoll.glitch.me/");
-let reader = new FileReader();
 
-reader.onload(() => console.log(reader.result));
 // ws.binaryType = "string";
 ws.addEventListener("open", () =>{
   console.log("We are connected!")
   ws.addEventListener("message", function(message){
-
-    // console.log(message.data.text());
-
-
-    reader.readAsText(message.data);
+    let messageJSON = JSON.parse(message.data);
+    let messageType = messageJSON.messageType;
+    let messageData = messageJSON.data;
+    if (messageJSON.messageType === "test"){
+      print("it worked")
+    }
+    if (messageJSON.messageType === "text"){
+    console.log(messageData)
+    }
 
   })
   ws.addEventListener("close", () =>{
@@ -76,15 +78,17 @@ function mouseClicked(){
 
   }
 }
-
-function connectToHost(){
-  // const ws = new WebSocket("ws:/tar6269.github.io/Major-Project/");
-
-  let newMessage = new Blob(["hello", "hi", "whats up?"], {type:'text/plain'});
-
-  ws.send(newMessage);
+function sendData(Type, data){
+  let newMessage = {messageType: Type, data: data};
+  let newMessageString = JSON.stringify(newMessage);
+  // let newMessage = "{testing testing 123}";
+  ws.send(newMessageString);
 
   print("message should be sent...");
+}
+function connectToHost(){
+  // const ws = new WebSocket("ws:/tar6269.github.io/Major-Project/");
+  sendData("ClientTypeChange", "host")
 
 }
 function hostServer(){
