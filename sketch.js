@@ -13,6 +13,10 @@ let joinButtonY;
 let hostOrClient
 let displayTest = false;
 let canvas;
+let joinMenu = false;
+let hostMenu = false;
+let hostList = [];
+
 const ws = new WebSocket("wss://momentous-honored-ragdoll.glitch.me/");
 
 // ws.binaryType = "string";
@@ -22,13 +26,16 @@ ws.addEventListener("open", () =>{
     let messageJSON = JSON.parse(message.data);
     let messageType = messageJSON.messageType;
     let messageData = messageJSON.data;
-    if (messageJSON.messageType === "test"){
-      print("it worked")
-    }
+
     if (messageJSON.messageType === "text"){
     console.log(messageData)
     }
-
+    if (messageJSON.messageType === "hostList"){
+      hostList = messageJSON.data;
+      print(messageJSON.data);
+      print(hostList);
+      }
+  
   })
   ws.addEventListener("close", () =>{
     ws.CLOSED = true;
@@ -48,10 +55,14 @@ function setup() {
 
 function draw() {
   background(220);
-  menuScreen();
-  if(displayTest){
 
+  if(joinMenu){
+    displayServerList(hostList);
   }
+  else{
+    menuScreen();
+  }
+
 }
 
 function menuScreen(){
@@ -67,7 +78,17 @@ function menuScreen(){
 
 }
 
+function displayServerList(hostList){
+  rectMode(CENTER);
+  textAlign(CENTER, CENTER);
+  let x = width/2;
+  let y = height/5;
+  for(let i = 0; i < hostList.length; i++){
+    rect(x, y *(i + 1), buttonWidth * 2, buttonHeight);
+    text(hostList[i].name, x, y *(i + 1));
 
+  }
+}
 function mouseClicked(){
   if(mouseX > (hostButtonX - buttonWidth/2) && mouseX < (hostButtonX + buttonWidth/2) && mouseY > (hostButtonY - buttonHeight/2) && mouseY < (hostButtonY + buttonHeight/2)){
     hostServer();
@@ -87,13 +108,10 @@ function sendData(Type, data){
   print("message should be sent...");
 }
 function connectToHost(){
-  // const ws = new WebSocket("ws:/tar6269.github.io/Major-Project/");
-  sendData("ClientTypeChange", "host")
-
+  // sendData("request", "hostList");
+  // joinMenu = true;
+  sendData("test");
 }
 function hostServer(){
-  let test = {
-    hello: true,
-  };
-  print(test.hello);
+  sendData("typeChangeHost", prompt("Enter a room name", "room name"));
 }
