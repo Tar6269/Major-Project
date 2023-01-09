@@ -13,6 +13,7 @@ let joinButtonY;
 let hostOrClient
 let displayTest = false;
 let canvas;
+let mainMenu = true;
 let joinMenu = false;
 let hostMenu = false;
 let hostList = [];
@@ -55,14 +56,16 @@ function setup() {
 
 function draw() {
   background(220);
-
-  if(joinMenu){
-    displayServerList(hostList);
-  }
-  else{
+  if(mainMenu){
     menuScreen();
   }
+  else if(joinMenu){
+    displayServerList(hostList);
+  }
 
+  // else if(hostMenu){
+
+  // }
 }
 
 function menuScreen(){
@@ -86,19 +89,40 @@ function displayServerList(hostList){
   for(let i = 0; i < hostList.length; i++){
     rect(x, y *(i + 1), buttonWidth * 2, buttonHeight);
     text(hostList[i].name, x, y *(i + 1));
-
+    
   }
 }
 function mouseClicked(){
-  if(mouseX > (hostButtonX - buttonWidth/2) && mouseX < (hostButtonX + buttonWidth/2) && mouseY > (hostButtonY - buttonHeight/2) && mouseY < (hostButtonY + buttonHeight/2)){
-    hostServer();
+  if(mainMenu){
+    if(mouseX > (hostButtonX - buttonWidth/2) && mouseX < (hostButtonX + buttonWidth/2) && mouseY > (hostButtonY - buttonHeight/2) && mouseY < (hostButtonY + buttonHeight/2)){
+      hostServer();
+      // mainMenu = false;
+    }
+    if(mouseX > (joinButtonX - buttonWidth/2) && mouseX < (joinButtonX + buttonWidth/2) && mouseY > (joinButtonY - buttonHeight/2) && mouseY < (joinButtonY + buttonHeight/2)){
+      connectToHost();
+      mainMenu = false;
+    }
   }
-  if(mouseX > (joinButtonX - buttonWidth/2) && mouseX < (joinButtonX + buttonWidth/2) && mouseY > (joinButtonY - buttonHeight/2) && mouseY < (joinButtonY + buttonHeight/2)){
-    connectToHost();
-    print("test");
+  else if (joinMenu){
+    rectMode(CENTER);
+    textAlign(CENTER, CENTER);
+    let x = width/2;
+    let y = height/5;
 
+    for(let i = 0; i < hostList.length; i++){
+      if(mouseX > (x - buttonWidth/2) && mouseX < (x + buttonWidth/2) && mouseY > (y *(i + 1) - buttonHeight/2) && mouseY < (y *(i + 1) + buttonHeight/2)){
+        console.log(hostList[i].name);
+        // sendData("", "");
+      }
+
+      // rect(x, y *(i + 1), buttonWidth * 2, buttonHeight);
+      // text(hostList[i].name, x, y *(i + 1));
+      
+    }
   }
+
 }
+
 function sendData(Type, data){
   let newMessage = {messageType: Type, data: data};
   let newMessageString = JSON.stringify(newMessage);
@@ -108,9 +132,9 @@ function sendData(Type, data){
   print("message should be sent...");
 }
 function connectToHost(){
-  // sendData("request", "hostList");
-  // joinMenu = true;
-  sendData("test");
+  sendData("request", "hostList");
+  joinMenu = true;
+  // sendData("test");
 }
 function hostServer(){
   sendData("typeChangeHost", prompt("Enter a room name", "room name"));
