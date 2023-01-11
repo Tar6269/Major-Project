@@ -43,6 +43,7 @@ ws.addEventListener("open", () =>{
   });
 });
 
+
 function setup() {
   canvas = createCanvas(windowWidth, windowHeight);
   canvas.center("horizontal");
@@ -112,6 +113,7 @@ function mouseClicked(){
     for(let i = 0; i < hostList.length; i++){
       if(mouseX > (x - buttonWidth/2) && mouseX < (x + buttonWidth/2) && mouseY > (y *(i + 1) - buttonHeight/2) && mouseY < (y *(i + 1) + buttonHeight/2)){
         console.log(hostList[i].name);
+        sendData("joinGame", hostList[i]);
         // sendData("", "");
       }
 
