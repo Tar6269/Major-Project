@@ -16,8 +16,10 @@ let canvas;
 let mainMenu = true;
 let joinMenu = false;
 let hostMenu = false;
+let inGame = false;
 let hostList = [];
-
+let hostRoomName;
+lastTriggered = 0;
 const ws = new WebSocket("wss://momentous-honored-ragdoll.glitch.me/");
 
 // ws.binaryType = "string";
@@ -63,10 +65,30 @@ function draw() {
   else if(joinMenu){
     displayServerList(hostList);
   }
+  else if (hostMenu){
+    textSize(width/50);
+    text("Your room name is :", width/2, height/4);
+    text(hostRoomName, width/2, height/3.5);
+    if(millis()- lastTriggered < 1000){
+    text("waiting for connection.", width/2, height/3);
+    }
+    else if (millis()- lastTriggered < 2000){
+      text("waiting for connection..", width/2, height/3);
+      
+    }
+    else if (millis()- lastTriggered < 3000){
+      text("waiting for connection...", width/2, height/3);
+      
+    }
+    else{
+    text("waiting for connection.", width/2, height/3);
+      lastTriggered = millis();
+    }
 
-  // else if(hostMenu){
+  }
+  else if(inGame){
 
-  // }
+  }
 }
 
 function menuScreen(){
@@ -122,7 +144,9 @@ function mouseClicked(){
       
     }
   }
+  else if(inGame){
 
+  }
 }
 
 function sendData(Type, data){
@@ -139,5 +163,9 @@ function connectToHost(){
   // sendData("test");
 }
 function hostServer(){
-  sendData("typeChangeHost", prompt("Enter a room name", "room name"));
+  mainMenu = false;
+  hostMenu = true;
+  let newRoomName = prompt("Enter a room name", "room name")
+  sendData("typeChangeHost", newRoomName);
+  hostRoomName = newRoomName;
 }

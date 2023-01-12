@@ -46,9 +46,16 @@ wss.on("connection", (ws) => {
     if(messageType === "joinGame"){
       
         gamesList.set(messageData.name, {host:clientIDMap.get(messageData.websocket), client:ws});
-        let testingVariable;
-        console.log(gamesList.get(messageData.name).host);
 
+        // console.log(gamesList.get(messageData.name).host);
+
+    for(let i = hostList.length-1; i > -1 ; i--){
+      console.log(messageData.websocket);
+      console.log(hostList[i].websocket);
+      if(hostList[i].websocket === messageData.websocket){
+        hostList.splice(i, 1);
+      }
+    }
         sendData("text", "a client has connected!", clientIDMap.get(messageData.websocket));
     }
     // sends message to all connected client
