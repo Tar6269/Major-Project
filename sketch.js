@@ -19,6 +19,11 @@ let hostMenu = false;
 let inGame = false;
 let hostList = [];
 let hostRoomName;
+let gameGenerationData;
+let enemyShipLocation = 0;
+let shipLocation = 0;
+let allyDirectionModifier;
+let enemyDirectionModifier;
 lastTriggered = 0;
 const ws = new WebSocket("wss://momentous-honored-ragdoll.glitch.me/");
 
@@ -38,7 +43,10 @@ ws.addEventListener("open", () =>{
       print(messageJSON.data);
       print(hostList);
       }
-  
+    if (messageJSON.messageType === "gameOn"){
+        gameGenerationData = messageData;
+        generateGame();
+      }
   })
   ws.addEventListener("close", () =>{
     ws.CLOSED = true;
@@ -47,6 +55,7 @@ ws.addEventListener("open", () =>{
 
 
 function setup() {
+  angleMode(DEGREES);
   canvas = createCanvas(windowWidth, windowHeight);
   canvas.center("horizontal");
   buttonWidth = windowWidth/3
@@ -66,28 +75,10 @@ function draw() {
     displayServerList(hostList);
   }
   else if (hostMenu){
-    textSize(width/50);
-    text("Your room name is :", width/2, height/4);
-    text(hostRoomName, width/2, height/3.5);
-    if(millis()- lastTriggered < 1000){
-    text("waiting for connection.", width/2, height/3);
-    }
-    else if (millis()- lastTriggered < 2000){
-      text("waiting for connection..", width/2, height/3);
-      
-    }
-    else if (millis()- lastTriggered < 3000){
-      text("waiting for connection...", width/2, height/3);
-      
-    }
-    else{
-    text("waiting for connection.", width/2, height/3);
-      lastTriggered = millis();
-    }
 
   }
   else if(inGame){
-
+    drawGame();
   }
 }
 
@@ -103,7 +94,27 @@ function menuScreen(){
   text("Join", joinButtonX, joinButtonY);
 
 }
+function drawHostMenu(){
+  textSize(width/50);
+  text("Your room name is :", width/2, height/4);
+  text(hostRoomName, width/2, height/3.5);
+  if(millis()- lastTriggered < 1000){
+  text("waiting for connection.", width/2, height/3);
+  }
+  else if (millis()- lastTriggered < 2000){
+    text("waiting for connection..", width/2, height/3);
+    
+  }
+  else if (millis()- lastTriggered < 3000){
+    text("waiting for connection...", width/2, height/3);
+    
+  }
+  else{
+  text("waiting for connection.", width/2, height/3);
+    lastTriggered = millis();
+  }
 
+}
 function displayServerList(hostList){
   rectMode(CENTER);
   textAlign(CENTER, CENTER);
@@ -145,7 +156,6 @@ function mouseClicked(){
     }
   }
   else if(inGame){
-
   }
 }
 
@@ -168,4 +178,51 @@ function hostServer(){
   let newRoomName = prompt("Enter a room name", "room name")
   sendData("typeChangeHost", newRoomName);
   hostRoomName = newRoomName;
+}
+
+function generateGame(){
+  mainMenu = false;
+  hostMenu = false;
+  joinMenu = false;
+  shipLocation = gameGenerationData.shipLocation;
+  enemyShipLocation = gameGenerationData.enemyShipLocation;
+  if(shipLocation > enemyShipLocation){
+    allyDirectionModifier = -1;
+    enemyDirectionModifier = 1;
+  }
+  else{
+    allyDirectionModifier = 1;
+    enemyDirectionModifier = -1;
+
+  }
+  inGame = true;
+}
+function drawBoats(){
+  fill("yellow");
+// player's ship
+  translate(pixelToCoord(shipLocation), height*4/5);
+  ellipse(0, 0, width/5, height/15);
+  rotate(45*allyDirectionModifier);
+  ellipse(width/20 * allyDirectionModifier, - height/30, width/40, height/20);
+
+// enemy's ship
+  fill("red")
+  rotate(-45*allyDirectionModifier);
+  translate(-pixelToCoord(shipLocation), 0);
+  translate(pixelToCoord(enemyShipLocation), 0);
+  ellipse(0, 0, width/5, height/15);
+  rotate(45*enemyDirectionModifier);
+  ellipse((width/20 * enemyDirectionModifier),-height/30, width/40, height/20);
+
+
+}
+function drawMap(){
+
+}
+function drawGame(){
+  drawBoats();
+  drawMap();
+}
+function pixelToCoord(x){
+  return map(x,0, 1000, 0, width);
 }
