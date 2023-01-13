@@ -56,8 +56,12 @@ wss.on("connection", (ws) => {
         hostList.splice(i, 1);
       }
     }
-        sendData("text", "a client has connected!", clientIDMap.get(messageData.websocket));
+      sendData("text", "a client has connected!", clientIDMap.get(messageData.websocket));
+      sendData("gameOn", {shipLocation:200, enemyShipLocation: 800}, clientIDMap.get(messageData.websocket));
+      sendData("gameOn", {shipLocation:800, enemyShipLocation: 200}, ws);
     }
+
+      
     // sends message to all connected client
     wss.clients.forEach(function (client) {
       client.send(String(msg));
