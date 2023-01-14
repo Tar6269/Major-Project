@@ -24,6 +24,7 @@ let enemyShipLocation = 0;
 let shipLocation = 0;
 let allyDirectionModifier;
 let enemyDirectionModifier;
+let heightWidthAV;
 lastTriggered = 0;
 const ws = new WebSocket("wss://momentous-honored-ragdoll.glitch.me/");
 
@@ -53,9 +54,18 @@ ws.addEventListener("open", () =>{
   });
 });
 
+function windowResized(){
+  resizeCanvas(windowWidth, windowHeight);
+}
+function preload(){
+  wheel = loadImage('assets/woodenWheel.png');
+  cannon = loadImage('assets/cannonBarrel.png');
 
+}
 function setup() {
+
   angleMode(DEGREES);
+  imageMode(CENTER);
   canvas = createCanvas(windowWidth, windowHeight);
   canvas.center("horizontal");
   buttonWidth = windowWidth/3
@@ -64,6 +74,7 @@ function setup() {
   hostButtonY = windowHeight/2;
   joinButtonX = windowWidth/2 + buttonWidth/2;
   joinButtonY = windowHeight/2;
+  heightWidthAV = windowWidth + windowHeight/2
 }
 
 function draw() {
@@ -75,7 +86,7 @@ function draw() {
     displayServerList(hostList);
   }
   else if (hostMenu){
-
+    drawHostMenu();
   }
   else if(inGame){
     drawGame();
@@ -198,22 +209,33 @@ function generateGame(){
   inGame = true;
 }
 function drawBoats(){
+  let aimPosition = atan2(mouseY - (height*4/5 - height/30), mouseX - (pixelToCoord(shipLocation) + width/20 * allyDirectionModifier)) + 12;
+  fill(0);
+  text(aimPosition , mouseX - (height*4/5 - height/30), width/5, height/20);
   fill("yellow");
 // player's ship
-  translate(pixelToCoord(shipLocation), height*4/5);
-  ellipse(0, 0, width/5, height/15);
-  rotate(45*allyDirectionModifier);
-  ellipse(width/20 * allyDirectionModifier, - height/30, width/40, height/20);
+  push();
+  translate(pixelToCoord(shipLocation) + width/20 * allyDirectionModifier, height*4/5 - height/30);
+  ellipse(-width/20 * allyDirectionModifier, + height/30, width/5, height/15);
+  rotate(aimPosition);
+  fill(0);
+  // ellipse(0, 0, heightWidthAV/40, heightWidthAV/20);
+  image(cannon, 0, 0, heightWidthAV/15, heightWidthAV/30);
 
+  pop();
 // enemy's ship
   fill("red")
-  rotate(-45*allyDirectionModifier);
-  translate(-pixelToCoord(shipLocation), 0);
-  translate(pixelToCoord(enemyShipLocation), 0);
-  ellipse(0, 0, width/5, height/15);
+  // rotate(-atan2(mouseY - (pixelToCoord(shipLocation) + width/20 * allyDirectionModifier), mouseX - (height*4/5 - height/30)));
+  // translate(-(pixelToCoord(shipLocation) + width/20 * allyDirectionModifier), 0);
+  translate(pixelToCoord(enemyShipLocation) + (width/20 * enemyDirectionModifier), height*4/5 - height/30);
+  ellipse(-(width/20 * enemyDirectionModifier), height/30, width/5, height/15);
   rotate(45*enemyDirectionModifier);
-  ellipse((width/20 * enemyDirectionModifier),-height/30, width/40, height/20);
+  fill(0);
 
+  // ellipse(0,0, heightWidthAV/40, heightWidthAV/20);
+  image(cannon, 0, 0, heightWidthAV/15, heightWidthAV/30);
+
+  push()
 
 }
 function drawMap(){
