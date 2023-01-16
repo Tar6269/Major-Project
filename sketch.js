@@ -20,12 +20,16 @@ let inGame = false;
 let hostList = [];
 let hostRoomName;
 let gameGenerationData;
+let playerTurn = true;
 let enemyShipLocation = 0;
 let shipLocation = 0;
 let allyDirectionModifier;
 let enemyDirectionModifier;
 let heightWidthAV;
 lastTriggered = 0;
+let cannonImage;
+let enemyCannonImage;
+
 const ws = new WebSocket("wss://momentous-honored-ragdoll.glitch.me/");
 
 // ws.binaryType = "string";
@@ -60,6 +64,7 @@ function windowResized(){
 function preload(){
   wheel = loadImage('assets/woodenWheel.png');
   cannon = loadImage('assets/cannonBarrel.png');
+  cannonFlipped = loadImage('assets/cannonBarrelFlipped.png');
 
 }
 function setup() {
@@ -150,7 +155,7 @@ function mouseClicked(){
   }
   else if (joinMenu){
     rectMode(CENTER);
-    textAlign(CENTER, CENTER);
+    // textAlign(CENTER, CENTER);
     let x = width/2;
     let y = height/5;
 
@@ -167,6 +172,7 @@ function mouseClicked(){
     }
   }
   else if(inGame){
+    fireCannon(10);
   }
 }
 
@@ -195,21 +201,29 @@ function generateGame(){
   mainMenu = false;
   hostMenu = false;
   joinMenu = false;
+
   shipLocation = gameGenerationData.shipLocation;
   enemyShipLocation = gameGenerationData.enemyShipLocation;
   if(shipLocation > enemyShipLocation){
     allyDirectionModifier = -1;
     enemyDirectionModifier = 1;
+    cannonImage = cannonFlipped;
+    enemyCannonImage = cannon;
   }
   else{
     allyDirectionModifier = 1;
     enemyDirectionModifier = -1;
+    cannonImage = cannon;
+    enemyCannonImage = cannonFlipped;
 
   }
   inGame = true;
 }
 function drawBoats(){
   let aimPosition = atan2(mouseY - (height*4/5 - height/30), mouseX - (pixelToCoord(shipLocation) + width/20 * allyDirectionModifier)) + 12;
+  if(cannonImage === cannonFlipped){
+    aimPosition += 162;
+  }
   fill(0);
   text(aimPosition , mouseX - (height*4/5 - height/30), width/5, height/20);
   fill("yellow");
@@ -220,7 +234,7 @@ function drawBoats(){
   rotate(aimPosition);
   fill(0);
   // ellipse(0, 0, heightWidthAV/40, heightWidthAV/20);
-  image(cannon, 0, 0, heightWidthAV/15, heightWidthAV/30);
+  image(cannonImage, 0, 0, heightWidthAV/15, heightWidthAV/30);
 
   pop();
 // enemy's ship
@@ -229,11 +243,11 @@ function drawBoats(){
   // translate(-(pixelToCoord(shipLocation) + width/20 * allyDirectionModifier), 0);
   translate(pixelToCoord(enemyShipLocation) + (width/20 * enemyDirectionModifier), height*4/5 - height/30);
   ellipse(-(width/20 * enemyDirectionModifier), height/30, width/5, height/15);
-  rotate(45*enemyDirectionModifier);
+  rotate(45*-enemyDirectionModifier);
   fill(0);
 
   // ellipse(0,0, heightWidthAV/40, heightWidthAV/20);
-  image(cannon, 0, 0, heightWidthAV/15, heightWidthAV/30);
+  image(enemyCannonImage, 0, 0, heightWidthAV/15, heightWidthAV/30);
 
   push()
 
@@ -244,7 +258,65 @@ function drawMap(){
 function drawGame(){
   drawBoats();
   drawMap();
+
+  for(let i = cannonBalls.length; i >=0; i--){
+    cannonBalls[i].draw()
+    cannonballs[i].move()
+    if(!cannonballs[i].bounding){
+      cannonBalls.splice(i, 1);
+    }
+  }
 }
 function pixelToCoord(x){
   return map(x,0, 1000, 0, width);
+}
+function CoordToPixel(x){
+  return map(x,0, width, 0, 1000);
+}
+function fireCannon(power){
+  console.log("cannon should be firing");
+  if(playerTurn){
+    print(pixelToCoord(shipLocation) + width/20 * allyDirectionModifier);
+    print(height*4/5 - height/30);
+    print(width);
+    print(height);
+    cannonBall(
+      pixelToCoord(shipLocation) + width/20 * allyDirectionModifier,
+      height*4/5 - height/30,
+      power,
+      atan2(mouseY - (height*4/5 - height/30), mouseX - (pixelToCoord(shipLocation) + width/20 * allyDirectionModifier)) + 12,
+      allyDirectionModifier
+      )
+
+
+    // sendData("cannonFired", coordToPixel(lastImpactCoords))
+  }
+}
+
+class CannonBall{
+  constructor(x, y, power, angle, direction){
+    this.dx = Math.cos(angle) * power;
+    this.dy = Math.sin(angle) * power;
+    this.direction = direction;
+    this.power = power;
+    if(this.direction === "left"){
+      this.power *= -1
+    }
+  }
+  move(){
+    if(y < height &&  y > 0){
+      fill(0);
+      
+      x += dx
+      y -= dy
+  
+      dy -= 1
+    }
+  }
+  draw(){
+    circle(x, y, heightWidthAV/50)
+  }
+  bounding(){
+    return (y < height &&  y > 0);
+  }
 }
