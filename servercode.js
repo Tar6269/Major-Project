@@ -13,16 +13,16 @@ function sendData(Type, data, websocket) {
   console.log("message should be sent...");
 }
 
-function generateID(){
+function generateID() {
   return Date.now() * Math.random(100);
 }
 wss.on("connection", (ws) => {
   console.log("new client connected");
   let newID = generateID();
-  
+
   ws.ID = newID;
   clientIDMap.set(newID, ws);
-  
+
   // console.log(ws)
   ws.binaryType = "string";
   // console.log(sockets);
@@ -31,37 +31,48 @@ wss.on("connection", (ws) => {
     let messageType = messageJSON.messageType;
     let messageData = messageJSON.data;
     if (messageType === "typeChangeHost") {
-        hostList.push({name:messageData, websocket:ws.ID});
-        sendData("text", "you are now hosting!", ws);
-        
-      
+      hostList.push({ name: messageData, websocket: ws.ID });
+      sendData("text", "you are now hosting!", ws);
     }
-     if (messageType === "request") {
-       if(messageData === "hostList"){
-         sendData("hostList",hostList, ws);       
-       }
-     }
-    console.log("message:" + msg);
-
-    if(messageType === "joinGame"){
-      
-        gamesList.set(messageData.name, {host:clientIDMap.get(messageData.websocket), client:ws});
-
-        // console.log(gamesList.get(messageData.name).host);
-
-    for(let i = hostList.length-1; i > -1 ; i--){
-      console.log(messageData.websocket);
-      console.log(hostList[i].websocket);
-      if(hostList[i].websocket === messageData.websocket){
-        hostList.splice(i, 1);
+    if (messageType === "request") {
+      if (messageData === "hostList") {
+        sendData("hostList", hostList, ws);
       }
     }
-      sendData("text", "a client has connected!", clientIDMap.get(messageData.websocket));
-      sendData("gameOn", {shipLocation:200, enemyShipLocation: 800}, clientIDMap.get(messageData.websocket));
-      sendData("gameOn", {shipLocation:800, enemyShipLocation: 200}, ws);
+    console.log("message:" + msg);
+
+    if (messageType === "joinGame") {
+      gamesList.set(messageData.name, {
+        host: clientIDMap.get(messageData.websocket),
+        client: ws,
+      });
+      ws.partner = gamesList.get(messageData.name).host;
+      gamesList.get(messageData.name).host.partner = ws;
+      // console.log(gamesList.get(messageData.name).host);
+
+      for (let i = hostList.length - 1; i > -1; i--) {
+        console.log(messageData.websocket);
+        console.log(hostList[i].websocket);
+        if (hostList[i].websocket === messageData.websocket) {
+          hostList.splice(i, 1);
+        }
+      }
+      sendData(
+        "text",
+        "a client has connected!",
+        clientIDMap.get(messageData.websocket)
+      );
+      sendData(
+        "gameOn",
+        { shipLocation: 200, enemyShipLocation: 800 },
+        clientIDMap.get(messageData.websocket)
+      );
+      sendData("gameOn", { shipLocation: 800, enemyShipLocation: 200 }, ws);
+    }
+    if (messageType === "cannonFired") {
+      sendData("fireCannon", messageData, ws.partner);
     }
 
-      
     // sends message to all connected client
     wss.clients.forEach(function (client) {
       client.send(String(msg));
@@ -69,8 +80,8 @@ wss.on("connection", (ws) => {
   });
   ws.on("close", () => {
     console.log("client has disconnected");
-    for(let i = hostList.length-1; i > -1 ; i--){
-      if(hostList[i].websocket === ws){
+    for (let i = hostList.length - 1; i > -1; i--) {
+      if (hostList[i].websocket === ws) {
         hostList.splice(i, 1);
       }
     }
