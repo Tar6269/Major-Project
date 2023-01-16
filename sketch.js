@@ -22,15 +22,45 @@ let cannonBalls = [];
 let hostRoomName;
 let gameGenerationData;
 let playerTurn = true;
+let enemyCannonAngle = 45;
 let enemyShipLocation = 0;
 let shipLocation = 0;
 let allyDirectionModifier;
 let enemyDirectionModifier;
+let enemyDirectionOffset;
 let heightWidthAV;
+let directionOffset;
 lastTriggered = 0;
 let cannonImage;
 let enemyCannonImage;
-
+class CannonBall{
+  constructor(x, y, power, angle, direction){
+    this.x = x;
+    this.y = y;
+    this.power = power;
+    console.log(angle);
+    this.dx = Math.cos(-angle * Math.PI/180) * this.power;
+    this.dy = Math.sin(-angle* Math.PI/180) * this.power;
+    this.direction = direction;
+    if(this.direction === "left"){
+      this.power *= -1;
+    }
+  }
+  move(){
+      this.x += this.dx;
+      this.y -= this.dy;
+  
+      this.dy -= .1;
+  }
+  draw(){
+    console.log("cannonball being drawn")
+    fill(0);
+    circle(this.x, this.y, heightWidthAV/50);
+  }
+  bounding(){
+    return (this.y < height &&  this.y > 0);
+  }
+}
 const ws = new WebSocket("wss://momentous-honored-ragdoll.glitch.me/");
 
 // ws.binaryType = "string";
@@ -53,6 +83,10 @@ ws.addEventListener("open", () =>{
         gameGenerationData = messageData;
         generateGame();
       }
+    
+    if (messageJSON.messageType === "fireCannon"){
+      fireCannon(messageJSON.data.angle, messageJSON.data.power);
+    }
   })
   ws.addEventListener("close", () =>{
     ws.CLOSED = true;
@@ -69,7 +103,7 @@ function preload(){
 
 }
 function setup() {
-
+  textAlign(CENTER, CENTER);
   angleMode(DEGREES);
   imageMode(CENTER);
   canvas = createCanvas(windowWidth, windowHeight);
@@ -102,7 +136,6 @@ function draw() {
 function menuScreen(){
 
   rectMode(CENTER);
-  textAlign(CENTER, CENTER);
   textSize(windowWidth/10)
   rect(hostButtonX, hostButtonY, buttonWidth, buttonHeight);
   text("Host", hostButtonX, hostButtonY);
@@ -134,7 +167,6 @@ function drawHostMenu(){
 }
 function displayServerList(hostList){
   rectMode(CENTER);
-  textAlign(CENTER, CENTER);
   let x = width/2;
   let y = height/5;
   for(let i = 0; i < hostList.length; i++){
@@ -173,7 +205,7 @@ function mouseClicked(){
     }
   }
   else if(inGame){
-    fireCannon(10);
+    IFireCannon(atan2(mouseY - (height*4/5 - height/30), mouseX - (pixelToCoord(shipLocation) + width/20 * allyDirectionModifier)), 10);
   }
 }
 
@@ -210,23 +242,26 @@ function generateGame(){
     enemyDirectionModifier = 1;
     cannonImage = cannonFlipped;
     enemyCannonImage = cannon;
+    directionOffset = 0;
+    enemyDirectionOffset = -150;
   }
   else{
     allyDirectionModifier = 1;
     enemyDirectionModifier = -1;
     cannonImage = cannon;
     enemyCannonImage = cannonFlipped;
-
+    enemyDirectionOffset = 0;
+    directionOffset = 12
   }
   inGame = true;
 }
 function drawBoats(){
-  let aimPosition = atan2(mouseY - (height*4/5 - height/30), mouseX - (pixelToCoord(shipLocation) + width/20 * allyDirectionModifier)) + 12;
+  let aimPosition = atan2(mouseY - (height*4/5 - height/30), mouseX - (pixelToCoord(shipLocation) + width/20 * allyDirectionModifier)) + directionOffset;
   if(cannonImage === cannonFlipped){
     aimPosition += 162;
   }
   fill(0);
-  text(aimPosition , mouseX - (height*4/5 - height/30), width/5, height/20);
+  // text(aimPosition , mouseX - (height*4/5 - height/30), width/5, height/20);
   fill("yellow");
 // player's ship
   push();
@@ -244,7 +279,7 @@ function drawBoats(){
   // translate(-(pixelToCoord(shipLocation) + width/20 * allyDirectionModifier), 0);
   translate(pixelToCoord(enemyShipLocation) + (width/20 * enemyDirectionModifier), height*4/5 - height/30);
   ellipse(-(width/20 * enemyDirectionModifier), height/30, width/5, height/15);
-  rotate(45*-enemyDirectionModifier);
+  rotate(enemyCannonAngle + enemyDirectionOffset);
   fill(0);
 
   // ellipse(0,0, heightWidthAV/40, heightWidthAV/20);
@@ -257,16 +292,18 @@ function drawMap(){
 
 }
 function drawGame(){
-  drawBoats();
   drawMap();
 
-  // for(let i = cannonBalls.length; i >=0; i--){
-  //   cannonBalls[i].draw()
-  //   cannonballs[i].move()
-  //   if(!cannonballs[i].bounding){
-  //     cannonBalls.splice(i, 1);
-  //   }
-  // }
+  for(let i = cannonBalls.length - 1; i >=0; i--){
+    cannonBalls[i].draw()
+    cannonBalls[i].move()
+    if(!cannonBalls[i].bounding()){
+      cannonBalls.splice(i, 1);
+    }
+  }
+  drawBoats();
+
+
 }
 function pixelToCoord(x){
   return map(x,0, 1000, 0, width);
@@ -274,50 +311,44 @@ function pixelToCoord(x){
 function CoordToPixel(x){
   return map(x,0, width, 0, 1000);
 }
-function fireCannon(power){
+function fireCannon(angle, power){
   console.log("cannon should be firing");
   if(playerTurn){
     print(pixelToCoord(shipLocation) + width/20 * allyDirectionModifier);
     print(height*4/5 - height/30);
     print(width);
     print(height);
-    new CannonBall(
+    let newCannonBall = new CannonBall(
+      pixelToCoord(enemyShipLocation) + (width/20 * enemyDirectionModifier),
+      height*4/5 - height/30,
+      power,
+      angle,
+      allyDirectionModifier
+      )
+    cannonBalls.push(newCannonBall);
+
+  }
+  
+  enemyCannonAngle = angle + 162;
+}
+
+function IFireCannon(angle, power){
+  console.log("cannon should be firing");
+  if(playerTurn){
+    print(pixelToCoord(shipLocation) + width/20 * allyDirectionModifier);
+    print(height*4/5 - height/30);
+    print(width);
+    print(height);
+    let newCannonBall = new CannonBall(
       pixelToCoord(shipLocation) + width/20 * allyDirectionModifier,
       height*4/5 - height/30,
       power,
-      atan2(mouseY - (height*4/5 - height/30), mouseX - (pixelToCoord(shipLocation) + width/20 * allyDirectionModifier)) + 12,
+      angle,
       allyDirectionModifier
       )
+    cannonBalls.push(newCannonBall);
 
 
-    // sendData("cannonFired", coordToPixel(lastImpactCoords))
-  }
-}
-
-class CannonBall{
-  constructor(x, y, power, angle, direction){
-    this.dx = Math.cos(angle) * power;
-    this.dy = Math.sin(angle) * power;
-    this.direction = direction;
-    this.power = power;
-    if(this.direction === "left"){
-      this.power *= -1
-    }
-  }
-  move(){
-    if(y < height &&  y > 0){
-      fill(0);
-      
-      x += dx
-      y -= dy
-  
-      dy -= 1
-    }
-  }
-  draw(){
-    circle(x, y, heightWidthAV/50)
-  }
-  bounding(){
-    return (y < height &&  y > 0);
+    sendData("cannonFired", {angle:angle, power:power});
   }
 }
