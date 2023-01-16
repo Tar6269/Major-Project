@@ -18,6 +18,7 @@ let joinMenu = false;
 let hostMenu = false;
 let inGame = false;
 let hostList = [];
+let cannonBalls = [];
 let hostRoomName;
 let gameGenerationData;
 let playerTurn = true;
@@ -259,13 +260,13 @@ function drawGame(){
   drawBoats();
   drawMap();
 
-  for(let i = cannonBalls.length; i >=0; i--){
-    cannonBalls[i].draw()
-    cannonballs[i].move()
-    if(!cannonballs[i].bounding){
-      cannonBalls.splice(i, 1);
-    }
-  }
+  // for(let i = cannonBalls.length; i >=0; i--){
+  //   cannonBalls[i].draw()
+  //   cannonballs[i].move()
+  //   if(!cannonballs[i].bounding){
+  //     cannonBalls.splice(i, 1);
+  //   }
+  // }
 }
 function pixelToCoord(x){
   return map(x,0, 1000, 0, width);
@@ -280,7 +281,7 @@ function fireCannon(power){
     print(height*4/5 - height/30);
     print(width);
     print(height);
-    cannonBall(
+    new CannonBall(
       pixelToCoord(shipLocation) + width/20 * allyDirectionModifier,
       height*4/5 - height/30,
       power,
