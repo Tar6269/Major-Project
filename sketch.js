@@ -33,29 +33,48 @@ let directionOffset;
 let lastTriggered;
 let cannonImage;
 let enemyCannonImage;
+let cameraAdjust = 0;
+let cameraHangDuration;
+let cameraHangLocation;
+let hangCamera;
 class CannonBall{
   constructor(x, y, power, angle, direction){
     this.x = x;
     this.y = y;
-    this.power = power;
+    this.power = pixelToCoordY(power) * pixelToCoord(power)/2;
     console.log(angle);
-    this.dx = Math.cos(-angle * Math.PI/180) * this.power;
-    this.dy = Math.sin(-angle* Math.PI/180) * this.power;
+    this.dx = coordToPixel(Math.cos(-angle * Math.PI/180)) * this.power;
+    this.dy = coordToPixelY(Math.sin(-angle* Math.PI/180)) * this.power;
     this.direction = direction;
+    this.controllingCamera = false;
     if(this.direction === "left"){
       this.power *= -1;
     }
   }
   move(){
+      if(this.controllingCamera){
+      this.x += this.dx/2;
+      }
+      else{
       this.x += this.dx;
+      }
+      // console.log(floor(this.x) === width/2);
+      // console.log(floor(this.x), width/2);
+      if(Math.abs(this.x - width/2) < 5){
+        this.controllingCamera = true;
+      }
       this.y -= this.dy;
   
-      this.dy -= .1;
+      this.dy -= pixelToCoord(.1);
   }
   draw(){
+    
     console.log("cannonball being drawn")
     fill(0);
     circle(this.x, this.y, heightWidthAV/50);
+    if(this.controllingCamera){
+    translate(width/2 - this.x, 0);
+    }
   }
   bounding(){
     return (this.y < height &&  this.y > 0);
@@ -98,6 +117,7 @@ ws.addEventListener("open", () =>{
 
 function windowResized(){
   resizeCanvas(windowWidth, windowHeight);
+  heightWidthAV = windowWidth + windowHeight/2
 }
 function preload(){
   wheel = loadImage('assets/woodenWheel.png');
@@ -117,7 +137,7 @@ function setup() {
   hostButtonY = windowHeight/2;
   joinButtonX = windowWidth/2 + buttonWidth/2;
   joinButtonY = windowHeight/2;
-  heightWidthAV = windowWidth + windowHeight/2
+  heightWidthAV = windowWidth + windowHeight/2;
   displayTest = false;
   mainMenu = true;
   joinMenu = false;
@@ -228,7 +248,7 @@ function mouseClicked(){
     }
   }
   else if(inGame){
-    IFireCannon(atan2(mouseY - (height*4/5 - height/30), mouseX - (pixelToCoord(shipLocation) + width/20 * allyDirectionModifier)), 10);
+    IFireCannon(atan2(mouseY - (height*4/5 - height/30), mouseX - (pixelToCoord(shipLocation) + width/20 * allyDirectionModifier)), 5);
   }
   else{
     
@@ -292,7 +312,7 @@ function drawBoats(){
 // player's ship
   push();
   translate(pixelToCoord(shipLocation) + width/20 * allyDirectionModifier, height*4/5 - height/30);
-  ellipse(-width/20 * allyDirectionModifier, + height/30, width/5, height/15);
+  ellipse(-width/20 * allyDirectionModifier, + height/30, heightWidthAV/5, heightWidthAV/15);
   rotate(aimPosition);
   fill(0);
   // ellipse(0, 0, heightWidthAV/40, heightWidthAV/20);
@@ -304,7 +324,7 @@ function drawBoats(){
   // rotate(-atan2(mouseY - (pixelToCoord(shipLocation) + width/20 * allyDirectionModifier), mouseX - (height*4/5 - height/30)));
   // translate(-(pixelToCoord(shipLocation) + width/20 * allyDirectionModifier), 0);
   translate(pixelToCoord(enemyShipLocation) + (width/20 * enemyDirectionModifier), height*4/5 - height/30);
-  ellipse(-(width/20 * enemyDirectionModifier), height/30, width/5, height/15);
+  ellipse(-(width/20 * enemyDirectionModifier), height/30, heightWidthAV/5, heightWidthAV/15);
   rotate(enemyCannonAngle + enemyDirectionOffset);
   fill(0);
 
@@ -324,7 +344,20 @@ function drawGame(){
     cannonBalls[i].draw()
     cannonBalls[i].move()
     if(!cannonBalls[i].bounding()){
+      if(cannonBalls[i].controllingCamera){
+        hangCameraInPlaceX(cannonBalls[i].x, 1000);
+      }
       cannonBalls.splice(i, 1);
+      cameraAdjust = 0;
+    }
+  }
+
+  if(hangCamera){
+    if(millis() - lastTriggered < cameraHangDuration){
+      translate(width/2 - cameraHangLocation, 0);
+    }
+    else{
+      hangCamera = false;
     }
   }
   drawBoats();
@@ -334,8 +367,14 @@ function drawGame(){
 function pixelToCoord(x){
   return map(x,0, 1000, 0, width);
 }
-function CoordToPixel(x){
+function pixelToCoordY(y){
+  return map(y,0, 1000, 0, height);
+}
+function coordToPixel(x){
   return map(x,0, width, 0, 1000);
+}
+function coordToPixelY(y){
+  return map(y,0, height, 0, 1000);
 }
 function fireCannon(angle, power){
   console.log("cannon should be firing");
@@ -376,5 +415,12 @@ function IFireCannon(angle, power){
 
 
     sendData("cannonFired", {angle:angle, power:power});
-  }
+   }
+}
+
+function hangCameraInPlaceX(x, duration){
+  lastTriggered = millis();
+  cameraHangLocation = x;
+  cameraHangDuration = duration;
+  hangCamera = true;
 }
