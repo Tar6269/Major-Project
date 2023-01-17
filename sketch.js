@@ -11,26 +11,26 @@ let hostButtonY;
 let joinButtonX;
 let joinButtonY;
 let hostOrClient
-let displayTest = false;
+let displayTest;
 let canvas;
-let mainMenu = true;
-let joinMenu = false;
-let hostMenu = false;
-let inGame = false;
-let hostList = [];
-let cannonBalls = [];
+let mainMenu;
+let joinMenu;
+let hostMenu;
+let inGame;
+let hostList;
+let cannonBalls;
 let hostRoomName;
 let gameGenerationData;
-let playerTurn = true;
-let enemyCannonAngle = 45;
-let enemyShipLocation = 0;
-let shipLocation = 0;
+let playerTurn;
+let enemyCannonAngle;
+let enemyShipLocation;
+let shipLocation;
 let allyDirectionModifier;
 let enemyDirectionModifier;
 let enemyDirectionOffset;
 let heightWidthAV;
 let directionOffset;
-lastTriggered = 0;
+let lastTriggered;
 let cannonImage;
 let enemyCannonImage;
 class CannonBall{
@@ -87,6 +87,9 @@ ws.addEventListener("open", () =>{
     if (messageJSON.messageType === "fireCannon"){
       fireCannon(messageJSON.data.angle, messageJSON.data.power);
     }
+    if (messageJSON.messageType === "partnerDisconnect"){
+      inGame = false;
+    }
   })
   ws.addEventListener("close", () =>{
     ws.CLOSED = true;
@@ -115,6 +118,18 @@ function setup() {
   joinButtonX = windowWidth/2 + buttonWidth/2;
   joinButtonY = windowHeight/2;
   heightWidthAV = windowWidth + windowHeight/2
+  displayTest = false;
+  mainMenu = true;
+  joinMenu = false;
+  hostMenu = false;
+  inGame = false;
+  hostList = [];
+  cannonBalls = [];
+  playerTurn = true;
+  enemyCannonAngle = 45;
+  enemyShipLocation = 0;
+  shipLocation = 0;
+  lastTriggered = 0;
 }
 
 function draw() {
@@ -130,6 +145,14 @@ function draw() {
   }
   else if(inGame){
     drawGame();
+  }
+  else{
+    fill("red");
+    textSize(width/20);
+    text("your opponent has disconnected :(", width/2, height/4);
+
+    text("Back to menu", buttonWidth*2, buttonHeight);
+    rect(hostButtonX, hostButtonY, buttonWidth*2, buttonHeight);
   }
 }
 
@@ -206,6 +229,9 @@ function mouseClicked(){
   }
   else if(inGame){
     IFireCannon(atan2(mouseY - (height*4/5 - height/30), mouseX - (pixelToCoord(shipLocation) + width/20 * allyDirectionModifier)), 10);
+  }
+  else{
+    
   }
 }
 
