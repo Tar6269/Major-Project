@@ -64,10 +64,10 @@ wss.on("connection", (ws) => {
       );
       sendData(
         "gameOn",
-        { shipLocation: 200, enemyShipLocation: 800 },
+        { shipLocation: 200, enemyShipLocation: 2800, host:true},
         clientIDMap.get(messageData.websocket)
       );
-      sendData("gameOn", { shipLocation: 800, enemyShipLocation: 200 }, ws);
+      sendData("gameOn", { shipLocation: 200, enemyShipLocation: 2800, host:false}, ws);
     }
     if (messageType === "cannonFired") {
       sendData("fireCannon", messageData, ws.partner);
@@ -80,9 +80,15 @@ wss.on("connection", (ws) => {
   });
   ws.on("close", () => {
     console.log("client has disconnected");
+    if(ws.partner !== undefined){
+    sendData("partnerDisconnect", "", ws.partner);
+    ws.partner.partner = undefined;
+    }
+
     for (let i = hostList.length - 1; i > -1; i--) {
-      if (hostList[i].websocket === ws) {
+      if (hostList[i].websocket === ws.ID) {
         hostList.splice(i, 1);
+        console.log("server removed from list")
       }
     }
     clientIDMap.delete(ws.ID);
