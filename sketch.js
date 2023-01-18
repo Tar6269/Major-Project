@@ -182,7 +182,7 @@ function setup() {
   textAlign(CENTER, CENTER);
   angleMode(DEGREES);
   imageMode(CENTER);
-  canvas = createCanvas(windowWidth, windowWidth);
+  canvas = createCanvas(windowWidth, windowHeight);
   canvas.center("horizontal");
   buttonWidth = windowWidth / 3
   buttonHeight = windowHeight / 5
@@ -498,13 +498,13 @@ function pixelToCoord(x) {
   return map(x, 0, 1000, 0, width);
 }
 function pixelToCoordY(y) {
-  return map(y, 0, 1000, 0, height);
+  return map(y, 0, 1000, 0, width);
 }
 function coordToPixel(x) {
   return map(x, 0, width, 0, 1000);
 }
 function coordToPixelY(y) {
-  return map(y, 0, height, 0, 1000);
+  return map(y, 0, width, 0, 1000);
 }
 function fireCannon(angle, power) {
   console.log("cannon should be firing");
