@@ -6,6 +6,11 @@
 // - learnt websockets and coded a server in order to make game multiplayer, as well as having to create my own ID generator method
 // - found 24/7 server hosting independently
 // -researched other P5.js functions such as atan2 in order to make cannon follow mouse
+
+// brief instructions if you're somehow completely confused:
+// get one client and select host, then provide a name
+// get another instant of the game and select join on the button that contains that name
+
 let buttonWidth;
 let buttonHeight;
 let hostButtonX;
@@ -381,8 +386,8 @@ function connectToHost() {
 
 }
 function hostServer() {
-  /** sends a request to the server asked to be promoted to a host */ 
-  
+  /** sends a request to the server asked to be promoted to a host */
+
   mainMenu = false;
   hostMenu = true;
   let newRoomName = prompt("Enter a room name", "room name")
@@ -587,7 +592,7 @@ function iFireCannon(angle, power) {
     cannonBalls.push(newCannonBall);
     playerTurn = false;
 
-// tells the server to notify the opponent that a shot has been fired
+    // tells the server to notify the opponent that a shot has been fired
     sendData("cannonFired", { angle: angle, power: power });
   }
 }
