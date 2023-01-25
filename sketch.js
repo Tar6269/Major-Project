@@ -1,9 +1,11 @@
-// Project Title
-// Your Name
-// Date
+// Raft Wars
+// Taran Rengarajan
+// 24/1/2023
 //
 // Extra for Experts:
-// - describe what you did to take this project "above and beyond"
+// - learnt websockets and coded a server in order to make game multiplayer, as well as having to create my own ID generator method
+// - found 24/7 server hosting independently
+// -researched other P5.js functions such as atan2 in order to make cannon follow mouse
 let buttonWidth;
 let buttonHeight;
 let hostButtonX;
@@ -53,6 +55,7 @@ class CannonBall {
     this.y = y;
     this.isEnemy = isEnemy;
     this.hitShip = false;
+    // cannonball travels opposite direction if sent by enemy ship
     if (this.isEnemy) {
       this.power = -(pixelToCoordY(power) * pixelToCoord(power) / 2);
       angle *= -1;
@@ -72,104 +75,114 @@ class CannonBall {
     }
   }
   move() {
+    // logic for cannon ball movement
+
+    // if cannon ball is following camera, speed is halved to compensate because following the camera doubles the actual movement
     if (this.controllingCamera) {
       this.x += this.dx / 2;
+      // shifts the background image to give the illusion of movement
       mapOffset += this.dx / 16;
     }
     else {
       this.x += this.dx;
     }
-    console.log(coordToPixel(this.x));
-    // console.log(floor(this.x) === width/2);
-    // console.log(floor(this.x), width/2);
+
+    // camera follows allied cannon ball if it has moved half way across the client's screen
     if (Math.abs(this.x - width / 2) < 20 && !this.isEnemy) {
       this.controllingCamera = true;
+      // camera follows enemy cannon ball if it has moved half way across the enemy's screen
     }
     else if (Math.abs(this.x - (pixelToCoord(3000) - width / 2)) < 20 && this.isEnemy) {
       this.controllingCamera = true;
     }
     this.y -= this.dy;
 
+    // acceleration of gravity (current value isn't calculated, just works well)
     this.dy -= pixelToCoord(.1);
-    // this.dx -= pixelToCoord(.01);
-
-    // this.dx -= pixelToCoord(.01);
-    if(this.x > pixelToCoord(shipLocation) - heightWidthAV/8 && this.x < pixelToCoord(shipLocation) + heightWidthAV /8 && this.y >   height * 4 / 5 - height / 30 && this.y <   height * 4 / 5 && this.isEnemy){
+    // check if enemy cannon ball has hit the allied ship
+    if (this.x > pixelToCoord(shipLocation) - heightWidthAV / 8 && this.x < pixelToCoord(shipLocation) + heightWidthAV / 8 && this.y > height * 4 / 5 - height / 30 && this.y < height * 4 / 5 && this.isEnemy) {
       console.log("ship has been hit!")
       this.hitShip = true;
+      gameOver = true;
       winStatus = "lost"
     }
-    if(this.x > pixelToCoord(enemyShipLocation) - heightWidthAV/8  && this.x < pixelToCoord(enemyShipLocation)  + heightWidthAV/8 && this.y >   height * 4 / 5 - height / 30 && this.y <   height * 4 / 5 && !this.isEnemy){
+    // checks if allied cannon ball has hit the enemy ship
+    if (this.x > pixelToCoord(enemyShipLocation) - heightWidthAV / 8 && this.x < pixelToCoord(enemyShipLocation) + heightWidthAV / 8 && this.y > height * 4 / 5 - height / 30 && this.y < height * 4 / 5 && !this.isEnemy) {
       console.log("we hit their ship!")
       this.hitShip = true;
+      gameOver = true;
       winStatus = "Won"
 
     }
   }
   draw() {
-
+    // draws the cannon ball onto the screen
     console.log("cannonball being drawn")
     fill(0);
 
+    // centers cannon ball on camera
     if (this.controllingCamera) {
-
       translate(width / 2 - this.x, 0);
-      circle(this.x, this.y, heightWidthAV / 50);
-      // pop();
-    }
-    else {
-      circle(this.x, this.y, heightWidthAV / 50);
     }
 
-
+    circle(this.x, this.y, heightWidthAV / 50);
   }
+  // returns true unless cannon ball is below screen height, used by cannon ball draw loop to delete old cannon balls
   bounding() {
     return (this.y < height);
   }
 }
+
+// establishes connection to websocket server
 let ws = new WebSocket("wss://momentous-honored-ragdoll.glitch.me/");
 
-// ws.binaryType = "string";
+// logic for what to do with received messages
 ws.addEventListener("open", () => {
   console.log("We are connected!")
   mainMenu = true;
- playerDisconnected = false;
+  playerDisconnected = false;
   ws.addEventListener("message", function (message) {
     let messageJSON = JSON.parse(message.data);
     let messageType = messageJSON.messageType;
     let messageData = messageJSON.data;
 
+    // logic for how to handle each received message type
     if (messageJSON.messageType === "text") {
       console.log(messageData)
     }
     if (messageJSON.messageType === "hostList") {
+      // updates hostlist array to display servers from the "join" state's menu
       hostList = messageJSON.data;
       print(messageJSON.data);
       print(hostList);
     }
+    // sets up a match after server has sent this confirmation that an opponent decided
     if (messageJSON.messageType === "gameOn") {
       gameGenerationData = messageData;
       generateGame();
     }
-
+    // fires the enemy's cannon according to what the server specifies
     if (messageJSON.messageType === "fireCannon") {
       console.log("receiving cannonball...")
       fireCannon(messageJSON.data.angle, messageJSON.data.power);
     }
+    // triggers when server tells this client that the opponent has disconnected
     if (messageJSON.messageType === "partnerDisconnect") {
       inGame = false;
       opponentLeft = true;
     }
   })
   ws.addEventListener("close", () => {
+    // displays disconnect menu if websocket connection fails
     playerDisconnected = true;
   });
 });
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  heightWidthAV =  windowWidth;
+  heightWidthAV = windowWidth;
 }
+
 function preload() {
   allyBoat = loadImage('assets/allyBoat.png');
   enemyBoat = loadImage('assets/enemyBoat.png');
@@ -192,7 +205,6 @@ function setup() {
   joinButtonY = windowHeight / 2;
   heightWidthAV = windowWidth;
   displayTest = false;
-  // mainMenu = true;
   joinMenu = false;
   hostMenu = false;
   inGame = false;
@@ -214,15 +226,8 @@ function setup() {
 
 function draw() {
   background(220);
-  if(playerDisconnected){
-    fill("red");
-    textSize(heightWidthAV / 30);
-    text("you have disconnected :(", width / 2, height / 4);
-    fill(255)
-    rect(hostButtonX + buttonWidth/2, hostButtonY, buttonWidth*2, buttonHeight);
-    fill(0)
-    textSize(heightWidthAV/15);
-    text("Back to menu", hostButtonX + buttonWidth/2, height / 2);
+  if (playerDisconnected) {
+    drawDisconnectMenu()
   }
   else if (mainMenu) {
     menuScreen();
@@ -237,14 +242,7 @@ function draw() {
     drawGame();
   }
   else if (opponentLeft) {
-    fill("red");
-    textSize(heightWidthAV / 30);
-    text("your opponent has disconnected :(", width / 2, height / 4);
-    fill(255)
-    rect(hostButtonX + buttonWidth/2, hostButtonY, buttonWidth*2, buttonHeight);
-    fill(0)
-    textSize(heightWidthAV/15);
-    text("Back to menu", hostButtonX + buttonWidth/2, height / 2);
+    drawOpponentDisconnectMenu()
   }
 }
 
@@ -281,12 +279,37 @@ function drawHostMenu() {
   }
 
 }
+
+// random commented text and rects are failed experiments at reconnect menu I may tweak in the future
+function drawDisconnectMenu() {
+  fill("red");
+  textSize(heightWidthAV / 30);
+  text("you have disconnected :(", width / 2, height / 4);
+  fill(255)
+  // rect(hostButtonX + buttonWidth/2, hostButtonY, buttonWidth*2, buttonHeight);
+  fill(0)
+  // textSize(heightWidthAV/15);
+  // text("Back to menu", hostButtonX + buttonWidth/2, height / 2);
+}
+
+function drawOpponentDisconnectMenu() {
+  fill("red");
+  textSize(heightWidthAV / 30);
+  text("your opponent has disconnected :(", width / 2, height / 4);
+  fill(255)
+  // rect(hostButtonX + buttonWidth/2, hostButtonY, buttonWidth*2, buttonHeight);
+  fill(0)
+  // textSize(heightWidthAV/15);
+  // text("Back to menu", hostButtonX + buttonWidth/2, height / 2);
+}
+
 function displayServerList(hostList) {
+  /**Displays a list of servers to connect to*/
   rectMode(CENTER);
   let x = width / 2;
   let y = height / 5;
-  if(hostList.length === 0){
-    text("No servers available", width/2, height/2);
+  if (hostList.length === 0) {
+    text("No servers available", width / 2, height / 2);
   }
   for (let i = 0; i < hostList.length; i++) {
     fill(255);
@@ -296,6 +319,7 @@ function displayServerList(hostList) {
 
   }
 }
+
 function mouseClicked() {
   if (mainMenu) {
     mainMenuButtons()
@@ -306,19 +330,20 @@ function mouseClicked() {
   else if (inGame) {
     iFireCannon(aimPosition, 7);
   }
-  else if(opponentLeft || playerDisconnected){
-    if(mouseX > hostButtonX + buttonWidth/2 && mouseX < hostButtonX + buttonWidth/2 + buttonWidth*2 && mouseY > (hostButtonY - buttonHeight / 2) && mouseY < (hostButtonY + buttonHeight / 2)){
-      if(playerDisconnected){
-        ws = new WebSocket("wss://momentous-honored-ragdoll.glitch.me/");
-      }
-      if(opponentLeft){
-        mainMenu = true;
-      }
-      // setup();
-    }
+  else if (opponentLeft || playerDisconnected) {
+    // experimental rejoin menu, currently bugged
+    // if(mouseX > hostButtonX + buttonWidth/2 && mouseX < hostButtonX + buttonWidth/2 + buttonWidth*2 && mouseY > (hostButtonY - buttonHeight / 2) && mouseY < (hostButtonY + buttonHeight / 2)){
+    //   if(playerDisconnected){
+    //     ws = new WebSocket("wss://momentous-honored-ragdoll.glitch.me/");
+    //   }
+    //   if(opponentLeft){
+    //     mainMenu = true;
+    //   }
+    //   // setup();
+    // }
   }
 }
-function mainMenuButtons(){
+function mainMenuButtons() {
   if (mouseX > (hostButtonX - buttonWidth / 2) && mouseX < (hostButtonX + buttonWidth / 2) && mouseY > (hostButtonY - buttonHeight / 2) && mouseY < (hostButtonY + buttonHeight / 2)) {
     hostServer();
   }
@@ -327,7 +352,7 @@ function mainMenuButtons(){
     mainMenu = false;
   }
 }
-function joinMenuButtons(){
+function joinMenuButtons() {
   let x = width / 2;
   let y = height / 5;
 
@@ -338,20 +363,26 @@ function joinMenuButtons(){
     }
   }
 }
+
 function sendData(Type, data) {
+  // sends data to the server; contains a message and a type, used to tell the server what to do with the received message data
   let newMessage = { messageType: Type, data: data };
   let newMessageString = JSON.stringify(newMessage);
-  // let newMessage = "{testing testing 123}";
+
   ws.send(newMessageString);
 
   print("message should be sent...");
 }
+
 function connectToHost() {
+  /** */
   sendData("request", "hostList");
   joinMenu = true;
-  // sendData("test");
+
 }
 function hostServer() {
+  /** sends a request to the server asked to be promoted to a host */ 
+  
   mainMenu = false;
   hostMenu = true;
   let newRoomName = prompt("Enter a room name", "room name")
@@ -360,6 +391,7 @@ function hostServer() {
 }
 
 function generateGame() {
+  // sets all relevent state variables to prepare for a match
   mainMenu = false;
   hostMenu = false;
   joinMenu = false;
@@ -374,6 +406,7 @@ function generateGame() {
   enemyDirectionOffset = 0;
   directionOffset = 12
 
+  // establishes turn order. host always starts.
   if (gameGenerationData.host) {
     playerTurn = true;
   }
@@ -383,18 +416,26 @@ function generateGame() {
   inGame = true;
 }
 function drawBoats() {
+
+  // atan finds the inverse tangent of the given input. in this case the math works out to output the angle between the player's cannon and the cursor
   aimPosition = atan2(mouseY - (height * 4 / 5 - height / 30), mouseX - (pixelToCoord(shipLocation) + width / 20 * allyDirectionModifier)) + directionOffset;
+
   let allyCannonX = pixelToCoord(shipLocation) + width / 20;
   let enemyCannonX = pixelToCoord(enemyShipLocation) - width / 20;
+
   let cannonY = height * 4 / 5 - height / 30;
+
   let boatOffsetX = -width / 20;
   let boatOffsetY = -height / 30;
+
   let boatWidth = heightWidthAV / 4;
   let boatHeight = heightWidthAV / 4;
+
   let enemyCannonOffset = 148;
-  height * 4 / 5 - height / 30
+
   let cannonWidth = heightWidthAV / 15
   let cannonHeight = heightWidthAV / 30
+
   if (cannonImage === cannonFlipped) {
     aimPosition += 162;
   }
@@ -422,7 +463,7 @@ function drawBoats() {
 
 }
 function drawMap() {
-  image(ocean, mapX + mapOffset, mapY, mapWidth, mapHeight);
+  image(ocean, mapX - mapOffset, mapY, mapWidth, mapHeight);
 }
 
 function drawGUI() {
@@ -445,7 +486,7 @@ function drawCannonBalls() {
   for (let i = cannonBalls.length - 1; i >= 0; i--) {
     cannonBalls[i].draw()
     cannonBalls[i].move()
-    if(cannonBalls[i].hitShip){
+    if (cannonBalls[i].hitShip) {
       gameOver = true;
     }
     if (!cannonBalls[i].bounding()) {
@@ -471,10 +512,7 @@ function drawCannonBalls() {
 }
 function drawGame() {
 
-
-
-  drawMap();
-
+  // keeps the camera on the cannon ball after it's deleted to make the animations look less jarring
   if (hangCamera) {
     if (millis() - lastTriggered < cameraHangDuration) {
       print(cameraHangLocation);
@@ -486,14 +524,14 @@ function drawGame() {
     }
 
   }
+
   drawGUI();
-
   drawCannonBalls();
-
   drawBoats();
-
-
 }
+// set of 4 functions used to scale the game to any monitor resolution. 
+// Repeat functions are there for future modification, but for now they all scale off of the window's width to solve some desync issues
+
 function pixelToCoord(x) {
   return map(x, 0, 1000, 0, width);
 }
@@ -506,7 +544,9 @@ function coordToPixel(x) {
 function coordToPixelY(y) {
   return map(y, 0, width, 0, 1000);
 }
+
 function fireCannon(angle, power) {
+  // fires the enemy's cannon when called. only called when this client receives a websocket message of the type "fireCannon"
   console.log("cannon should be firing");
   if (!playerTurn) {
     print(pixelToCoord(shipLocation) + width / 20 * allyDirectionModifier);
@@ -529,6 +569,7 @@ function fireCannon(angle, power) {
 }
 
 function iFireCannon(angle, power) {
+  /** creates a new cannon ball, and fires it when called */
   console.log("cannon should be firing");
   if (playerTurn) {
     print(pixelToCoord(shipLocation) + width / 20 * allyDirectionModifier);
@@ -546,16 +587,15 @@ function iFireCannon(angle, power) {
     cannonBalls.push(newCannonBall);
     playerTurn = false;
 
-
+// tells the server to notify the opponent that a shot has been fired
     sendData("cannonFired", { angle: angle, power: power });
   }
 }
 
 function hangCameraInPlaceX(x, duration) {
+  // sets hangCamera variable to be true for as many milliseconds as the value of the duration input
   lastTriggered = millis();
   cameraHangLocation = x;
   cameraHangDuration = duration;
   hangCamera = true;
-  // translate(width/2 - cameraHangLocation, 0);
-
 }
