@@ -529,7 +529,7 @@ function drawGame() {
     }
 
   }
-
+  drawMap();
   drawGUI();
   drawCannonBalls();
   drawBoats();
